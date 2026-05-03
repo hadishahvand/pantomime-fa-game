@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>پانتومیم آنلاین</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="bg"></div>
+    <main class="shell">
+      <header class="hero">
+        <h1>پانتومیم آنلاین</h1>
+        <p class="tagline">یک نفر میم، بقیه حدس می‌زنند — بدون حرف زدن.</p>
+      </header>
+
+      <section id="gate" class="card">
+        <label>نام شما</label>
+        <input id="playerName" type="text" maxlength="24" placeholder="مثلاً سارا" autocomplete="nickname" />
+
+        <div class="row">
+          <button type="button" id="btnCreate" class="btn primary">ساخت اتاق جدید</button>
+        </div>
+        <div class="divider"><span>یا</span></div>
+        <label>کد اتاق</label>
+        <input id="roomCode" type="text" maxlength="6" placeholder="مثلاً A3XY2" dir="ltr" class="code-input" />
+        <button type="button" id="btnJoin" class="btn secondary">ورود به اتاق</button>
+        <p id="gateError" class="error" hidden></p>
+      </section>
+
+      <section id="lobby" class="card hidden">
+        <div class="lobby-top">
+          <div>
+            <p class="muted">کد اتاق</p>
+            <p id="displayCode" class="big-code" dir="ltr"></p>
+          </div>
+          <span id="youHost" class="pill hidden">میزبان</span>
+        </div>
+        <p class="hint">این کد را برای دوستان بفرستید تا وارد شوند.</p>
+
+        <h2>بازیکنان</h2>
+        <ul id="playerList" class="player-list"></ul>
+
+        <p id="hostHint" class="hint hidden"></p>
+        <div id="hostControls" class="row hidden">
+          <button type="button" id="btnStart" class="btn primary">شروع دست بعدی (۹۰ ثانیه)</button>
+        </div>
+
+        <div id="guessBox" class="guess-box hidden">
+          <label>حدس شما</label>
+          <div class="guess-row">
+            <input id="guessInput" type="text" placeholder="کلمه را بنویسید" />
+            <button type="button" id="btnGuess" class="btn primary">ارسال</button>
+          </div>
+        </div>
+
+        <div id="actorPanel" class="actor-panel hidden">
+          <p class="muted">کلمهٔ شما (فقط شما می‌بینید)</p>
+          <p id="secretWord" class="secret-word"></p>
+          <p id="timer" class="timer"></p>
+        </div>
+
+        <div class="row">
+          <button type="button" id="btnSkip" class="btn ghost hidden">رد کردن دست</button>
+        </div>
+
+        <p id="toast" class="toast" hidden></p>
+      </section>
+    </main>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

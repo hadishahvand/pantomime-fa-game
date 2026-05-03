@@ -1,0 +1,6 @@
+node_modules/
+.env
+*.log
+
+# اختیاری: حجم زیاد؛ با npm run fetch-words می‌توانی دوباره بگیری
+data/words-full.json

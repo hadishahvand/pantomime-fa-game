@@ -1,0 +1,5 @@
+words-game.json از فیلتر روی لیست خام ساخته شده است.
+
+منبع لیست خام (words-full): https://github.com/mvalipour/word-list-fa
+برای دانلود دوبارهٔ فایل خام روی ماشین خودت: npm run fetch-words
+سپس بازسازیٔ لیست بازی: npm run filter-words
