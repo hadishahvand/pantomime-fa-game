@@ -96,6 +96,44 @@ body {
   cursor: pointer;
 }
 
+.card textarea {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  resize: vertical;
+  min-height: 5rem;
+}
+
+.block-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.optional-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0.35rem 0 0.2rem;
+}
+
+.word-reveal {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(61, 214, 199, 0.4);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.timer-inline {
+  margin: 0.35rem 0 0.5rem;
+}
+
 .code-input {
   text-transform: uppercase;
   letter-spacing: 0.12em;

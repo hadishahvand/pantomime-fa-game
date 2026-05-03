@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>پانتومیم آنلاین</title>
+    <title>پانتومیم</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -13,126 +13,113 @@
     <div class="bg"></div>
     <main class="shell shell-wide">
       <header class="hero">
-        <h1>پانتومیم آنلاین</h1>
-        <p class="tagline">دو تیم؛ نوبت میم و حدس؛ کلمه شانسی یا موضوعی با سطح سختی.</p>
+        <h1>پانتومیم</h1>
+        <p class="tagline">روی یک دستگاه؛ دو تیم، اسامی، تعداد دست و کلمه (شانسی یا موضوعی).</p>
       </header>
 
-      <section id="gate" class="card">
-        <label>نام شما</label>
-        <input id="playerName" type="text" maxlength="24" placeholder="مثلاً سارا" autocomplete="nickname" />
+      <p id="loadError" class="error" hidden></p>
 
-        <div class="row">
-          <button type="button" id="btnCreate" class="btn primary">ساخت اتاق جدید</button>
+      <section id="setupBlock" class="card">
+        <h2 class="block-title">تنظیم تیم‌ها و بازی</h2>
+        <p class="hint small">نیازی به ورود چند نفر نیست؛ همان گوشی یا لپتاپ برای همه کافی است.</p>
+
+        <div class="grid2">
+          <div>
+            <label>نام تیم ۱</label>
+            <input type="text" id="teamName0" maxlength="32" placeholder="مثلاً تیم الف" />
+          </div>
+          <div>
+            <label>نام تیم ۲</label>
+            <input type="text" id="teamName1" maxlength="32" placeholder="مثلاً تیم ب" />
+          </div>
         </div>
-        <div class="divider"><span>یا</span></div>
-        <label>کد اتاق</label>
-        <input id="roomCode" type="text" maxlength="6" placeholder="مثلاً A3XY2" dir="ltr" class="code-input" />
-        <button type="button" id="btnJoin" class="btn secondary">ورود به اتاق</button>
-        <p id="gateError" class="error" hidden></p>
+
+        <div class="grid2">
+          <div>
+            <label>اسامی تیم ۱ <span class="muted">(هر خط یک نفر)</span></label>
+            <textarea id="teamRoster0" rows="4" placeholder="علی&#10;مریم"></textarea>
+            <label class="optional-label">تعداد بازیکن تیم ۱ <span class="muted">(اختیاری — اگر بالا خالی باشد)</span></label>
+            <input type="number" id="teamCount0" min="0" max="30" step="1" placeholder="0" />
+          </div>
+          <div>
+            <label>اسامی تیم ۲ <span class="muted">(هر خط یک نفر)</span></label>
+            <textarea id="teamRoster1" rows="4"></textarea>
+            <label class="optional-label">تعداد بازیکن تیم ۲ <span class="muted">(اختیاری)</span></label>
+            <input type="number" id="teamCount1" min="0" max="30" step="1" placeholder="0" />
+          </div>
+        </div>
+
+        <label>تعداد دست (مرحله)</label>
+        <input type="number" id="totalRounds" min="1" max="50" step="1" value="10" />
+
+        <label>منبع کلمه</label>
+        <select id="wordMode">
+          <option value="random">شانسی (کل بانک)</option>
+          <option value="topic">موضوعی</option>
+        </select>
+
+        <div id="topicWrap" class="hidden">
+          <label>موضوع</label>
+          <select id="topicId"></select>
+        </div>
+
+        <label>سطح سختی کلمات</label>
+        <select id="difficulty">
+          <option value="easy">آسان</option>
+          <option value="medium" selected>متوسط</option>
+          <option value="hard">سخت</option>
+          <option value="mixed">ترکیبی</option>
+        </select>
+
+        <p id="setupError" class="error" hidden></p>
+        <button type="button" id="btnStartGame" class="btn primary">شروع بازی</button>
       </section>
 
-      <section id="lobby" class="card hidden">
-        <div class="lobby-top">
-          <div>
-            <p class="muted">کد اتاق</p>
-            <p id="displayCode" class="big-code" dir="ltr"></p>
-          </div>
-          <span id="youHost" class="pill hidden">میزبان</span>
-        </div>
-        <p class="hint">کد را برای دوستان بفرستید؛ هر کس تیم خودش را انتخاب کند.</p>
-
-        <div id="scoreBoard" class="score-board hidden">
-          <div class="team-score" data-team="0">
+      <section id="playBlock" class="card hidden">
+        <div class="score-board">
+          <div class="team-score">
             <span class="tn" id="scoreName0"></span>
             <span class="tv" id="scoreVal0">0</span>
           </div>
           <div class="vs">امتیاز</div>
-          <div class="team-score" data-team="1">
+          <div class="team-score">
             <span class="tn" id="scoreName1"></span>
             <span class="tv" id="scoreVal1">0</span>
           </div>
         </div>
-        <p id="phaseLine" class="phase-line hidden"></p>
-
-        <div id="setupPanel" class="setup-panel hidden">
-          <h2>تنظیم بازی (میزبان)</h2>
-          <div class="grid2">
-            <div>
-              <label>نام تیم ۱</label>
-              <input type="text" id="teamName0" maxlength="32" />
-            </div>
-            <div>
-              <label>نام تیم ۲</label>
-              <input type="text" id="teamName1" maxlength="32" />
-            </div>
-          </div>
-          <label>تعداد دست (مرحله)</label>
-          <input type="number" id="totalRounds" min="1" max="50" step="1" />
-
-          <label>منبع کلمه</label>
-          <select id="wordMode">
-            <option value="random">شانسی (کل بانک)</option>
-            <option value="topic">موضوعی</option>
-          </select>
-
-          <div id="topicWrap" class="hidden">
-            <label>موضوع</label>
-            <select id="topicId"></select>
-          </div>
-
-          <label>سطح سختی کلمات</label>
-          <select id="difficulty">
-            <option value="easy">آسان (کلمهٔ کوتاه‌تر)</option>
-            <option value="medium">متوسط</option>
-            <option value="hard">سخت (کلمهٔ بلندتر)</option>
-            <option value="mixed">ترکیبی (همه سطح‌ها)</option>
-          </select>
-
-          <button type="button" id="btnSaveSetup" class="btn secondary">ذخیرهٔ تنظیمات</button>
-          <button type="button" id="btnStartGame" class="btn primary">شروع بازی</button>
-        </div>
-
-        <h2>بازیکنان و تیم</h2>
-        <p class="hint small">هر نفر یکی از دکمه‌های تیم را بزند.</p>
-        <ul id="playerList" class="player-list"></ul>
-        <div class="row center">
-          <button type="button" id="btnTeam0" class="btn secondary team-pick">تیم ۱</button>
-          <button type="button" id="btnTeam1" class="btn secondary team-pick">تیم ۲</button>
-        </div>
-
-        <p id="hostHint" class="hint hidden"></p>
-        <div id="hostPlayControls" class="row hidden">
-          <button type="button" id="btnNextRound" class="btn primary">دست بعدی</button>
-        </div>
-
-        <div id="guessBox" class="guess-box hidden">
-          <label>حدس تیم حریف</label>
-          <div class="guess-row">
-            <input id="guessInput" type="text" placeholder="کلمه را دقیق بنویسید" />
-            <button type="button" id="btnGuess" class="btn primary">ارسال</button>
-          </div>
-        </div>
+        <p id="phaseLine" class="phase-line"></p>
 
         <div id="actorPanel" class="actor-panel hidden">
-          <p class="muted">کلمهٔ شما (فقط شما می‌بینید)</p>
-          <p id="secretWord" class="secret-word"></p>
-          <p id="timer" class="timer"></p>
+          <p class="muted">نوبت میم: <strong id="actorName"></strong></p>
+          <button type="button" id="btnRevealWord" class="btn secondary">نمایش / پنهان کردن کلمه</button>
+          <p id="timer" class="timer timer-inline"></p>
+          <div id="wordReveal" class="word-reveal hidden">
+            <p id="secretWord" class="secret-word"></p>
+          </div>
           <button type="button" id="btnSwapWord" class="btn ghost hidden">تعویض کلمه (یک بار)</button>
         </div>
 
+        <div id="guessBox" class="guess-box">
+          <label>حدس تیم مقابل</label>
+          <div class="guess-row">
+            <input id="guessInput" type="text" placeholder="کلمه را دقیق بنویسید" />
+            <button type="button" id="btnGuess" class="btn primary">درست بود</button>
+          </div>
+        </div>
+
         <div class="row">
-          <button type="button" id="btnSkip" class="btn ghost hidden">رد کردن کل دست</button>
+          <button type="button" id="btnSkip" class="btn ghost hidden">رد کردن این دست</button>
+          <button type="button" id="btnNextRound" class="btn primary hidden">دست بعدی</button>
         </div>
 
         <div id="finishedBar" class="finished-bar hidden">
           <p id="finishedText"></p>
-          <button type="button" id="btnResetLobby" class="btn secondary">بازی جدید (تنظیم مجدد)</button>
+          <button type="button" id="btnReset" class="btn secondary">تنظیم مجدد</button>
         </div>
 
         <p id="toast" class="toast" hidden></p>
       </section>
     </main>
-    <script src="/socket.io/socket.io.js"></script>
     <script type="module" src="/app.js"></script>
   </body>
 </html>

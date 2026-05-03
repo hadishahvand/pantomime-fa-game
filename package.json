@@ -13,7 +13,6 @@
     "rebuild-words": "node scripts/fetch-words.mjs && node scripts/filter-words.mjs"
   },
   "dependencies": {
-    "express": "^4.21.0",
-    "socket.io": "^4.8.1"
+    "express": "^4.21.0"
   }
 }
