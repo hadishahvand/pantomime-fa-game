@@ -11,10 +11,10 @@
   </head>
   <body>
     <div class="bg"></div>
-    <main class="shell">
+    <main class="shell shell-wide">
       <header class="hero">
         <h1>پانتومیم آنلاین</h1>
-        <p class="tagline">یک نفر میم، بقیه حدس می‌زنند — بدون حرف زدن.</p>
+        <p class="tagline">دو تیم؛ نوبت میم و حدس؛ کلمه شانسی یا موضوعی با سطح سختی.</p>
       </header>
 
       <section id="gate" class="card">
@@ -39,20 +39,76 @@
           </div>
           <span id="youHost" class="pill hidden">میزبان</span>
         </div>
-        <p class="hint">این کد را برای دوستان بفرستید تا وارد شوند.</p>
+        <p class="hint">کد را برای دوستان بفرستید؛ هر کس تیم خودش را انتخاب کند.</p>
 
-        <h2>بازیکنان</h2>
+        <div id="scoreBoard" class="score-board hidden">
+          <div class="team-score" data-team="0">
+            <span class="tn" id="scoreName0"></span>
+            <span class="tv" id="scoreVal0">0</span>
+          </div>
+          <div class="vs">امتیاز</div>
+          <div class="team-score" data-team="1">
+            <span class="tn" id="scoreName1"></span>
+            <span class="tv" id="scoreVal1">0</span>
+          </div>
+        </div>
+        <p id="phaseLine" class="phase-line hidden"></p>
+
+        <div id="setupPanel" class="setup-panel hidden">
+          <h2>تنظیم بازی (میزبان)</h2>
+          <div class="grid2">
+            <div>
+              <label>نام تیم ۱</label>
+              <input type="text" id="teamName0" maxlength="32" />
+            </div>
+            <div>
+              <label>نام تیم ۲</label>
+              <input type="text" id="teamName1" maxlength="32" />
+            </div>
+          </div>
+          <label>تعداد دست (مرحله)</label>
+          <input type="number" id="totalRounds" min="1" max="50" step="1" />
+
+          <label>منبع کلمه</label>
+          <select id="wordMode">
+            <option value="random">شانسی (کل بانک)</option>
+            <option value="topic">موضوعی</option>
+          </select>
+
+          <div id="topicWrap" class="hidden">
+            <label>موضوع</label>
+            <select id="topicId"></select>
+          </div>
+
+          <label>سطح سختی کلمات</label>
+          <select id="difficulty">
+            <option value="easy">آسان (کلمهٔ کوتاه‌تر)</option>
+            <option value="medium">متوسط</option>
+            <option value="hard">سخت (کلمهٔ بلندتر)</option>
+            <option value="mixed">ترکیبی (همه سطح‌ها)</option>
+          </select>
+
+          <button type="button" id="btnSaveSetup" class="btn secondary">ذخیرهٔ تنظیمات</button>
+          <button type="button" id="btnStartGame" class="btn primary">شروع بازی</button>
+        </div>
+
+        <h2>بازیکنان و تیم</h2>
+        <p class="hint small">هر نفر یکی از دکمه‌های تیم را بزند.</p>
         <ul id="playerList" class="player-list"></ul>
+        <div class="row center">
+          <button type="button" id="btnTeam0" class="btn secondary team-pick">تیم ۱</button>
+          <button type="button" id="btnTeam1" class="btn secondary team-pick">تیم ۲</button>
+        </div>
 
         <p id="hostHint" class="hint hidden"></p>
-        <div id="hostControls" class="row hidden">
-          <button type="button" id="btnStart" class="btn primary">شروع دست بعدی (۹۰ ثانیه)</button>
+        <div id="hostPlayControls" class="row hidden">
+          <button type="button" id="btnNextRound" class="btn primary">دست بعدی</button>
         </div>
 
         <div id="guessBox" class="guess-box hidden">
-          <label>حدس شما</label>
+          <label>حدس تیم حریف</label>
           <div class="guess-row">
-            <input id="guessInput" type="text" placeholder="کلمه را بنویسید" />
+            <input id="guessInput" type="text" placeholder="کلمه را دقیق بنویسید" />
             <button type="button" id="btnGuess" class="btn primary">ارسال</button>
           </div>
         </div>
@@ -61,10 +117,16 @@
           <p class="muted">کلمهٔ شما (فقط شما می‌بینید)</p>
           <p id="secretWord" class="secret-word"></p>
           <p id="timer" class="timer"></p>
+          <button type="button" id="btnSwapWord" class="btn ghost hidden">تعویض کلمه (یک بار)</button>
         </div>
 
         <div class="row">
-          <button type="button" id="btnSkip" class="btn ghost hidden">رد کردن دست</button>
+          <button type="button" id="btnSkip" class="btn ghost hidden">رد کردن کل دست</button>
+        </div>
+
+        <div id="finishedBar" class="finished-bar hidden">
+          <p id="finishedText"></p>
+          <button type="button" id="btnResetLobby" class="btn secondary">بازی جدید (تنظیم مجدد)</button>
         </div>
 
         <p id="toast" class="toast" hidden></p>
