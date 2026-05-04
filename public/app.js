@@ -94,27 +94,46 @@ function buildPoolsFromFlat(flat) {
 }
 
 async function loadBanks() {
-  const [gRes, tRes] = await Promise.all([
-    fetch("/data/words-game.json"),
-    fetch("/data/words-topics.json"),
-  ]);
-  if (!gRes.ok) throw new Error("بارگذاری words-game.json نشد");
-  const flat = uniq(JSON.parse(await gRes.text()));
+  let flat = [];
+  let rawTopics = { topics: [] };
+
+  try {
+    const apiRes = await fetch("/api/banks", { cache: "no-store" });
+    if (apiRes.ok) {
+      const banks = await apiRes.json();
+      flat = uniq(banks.wordsGame || banks.words || []);
+      rawTopics = banks.wordsTopics || banks.topics || { topics: [] };
+    }
+  } catch {
+    // اگر nginx یا کش قدیمی هنوز /api/banks را سرو نکرد، مسیرهای فایل را امتحان می‌کنیم.
+  }
+
+  if (!flat.length) {
+    const [gRes, tRes] = await Promise.all([
+      fetch("/data/words-game.json", { cache: "no-store" }),
+      fetch("/data/words-topics.json", { cache: "no-store" }).catch(() => null),
+    ]);
+    if (!gRes.ok) throw new Error("بارگذاری words-game.json نشد");
+    flat = uniq(JSON.parse(await gRes.text()));
+    if (tRes?.ok) rawTopics = JSON.parse(await tRes.text());
+  }
+
+  if (!flat.length) {
+    flat = uniq(["گربه", "خانه", "ماشین", "کتاب", "دویدن", "خندیدن", "درخت", "پرواز"]);
+  }
+
   const mixed = buildPoolsFromFlat(flat);
   let topicsMeta = [];
   const byTopic = {};
-  if (tRes.ok) {
-    const raw = JSON.parse(await tRes.text());
-    topicsMeta = (raw.topics || []).map((t) => ({ id: t.id, label: t.label }));
-    for (const t of raw.topics || []) {
-      const words = uniq(t.words || []);
-      const pools = { easy: [], medium: [], hard: [], all: [] };
-      for (const w of words) {
-        pools[bucketByLength(w)].push(w);
-        pools.all.push(w);
-      }
-      byTopic[t.id] = pools;
+  topicsMeta = (rawTopics.topics || []).map((t) => ({ id: t.id, label: t.label }));
+  for (const t of rawTopics.topics || []) {
+    const words = uniq(t.words || []);
+    const pools = { easy: [], medium: [], hard: [], all: [] };
+    for (const w of words) {
+      pools[bucketByLength(w)].push(w);
+      pools.all.push(w);
     }
+    byTopic[t.id] = pools;
   }
   POOLS = { mixed, byTopic, topicsMeta, flat };
 }
