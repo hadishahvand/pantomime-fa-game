@@ -21,15 +21,19 @@ const scoreName0 = $("scoreName0");
 const scoreName1 = $("scoreName1");
 const scoreVal0 = $("scoreVal0");
 const scoreVal1 = $("scoreVal1");
+const totalScoreSum = $("totalScoreSum");
+const turnDetail = $("turnDetail");
 const phaseLine = $("phaseLine");
 const actorPanel = $("actorPanel");
 const actorName = $("actorName");
+const actorTeamName = $("actorTeamName");
+const wordValueLine = $("wordValueLine");
 const btnRevealWord = $("btnRevealWord");
+const btnStartTimer = $("btnStartTimer");
 const wordReveal = $("wordReveal");
 const secretWord = $("secretWord");
 const timerEl = $("timer");
 const btnSwapWord = $("btnSwapWord");
-const guessInput = $("guessInput");
 const btnGuess = $("btnGuess");
 const btnSkip = $("btnSkip");
 const btnNextRound = $("btnNextRound");
@@ -39,6 +43,9 @@ const btnReset = $("btnReset");
 const toast = $("toast");
 
 const ROUND_MS = 90_000;
+
+/** امتیاز بر اساس سختی واقعی کلمه (طول) */
+const POINTS_BY_BUCKET = { easy: 1, medium: 2, hard: 3 };
 
 /** @type {{ mixed: object, byTopic: object, topicsMeta: {id:string,label:string}[] } | null} */
 let POOLS = null;
@@ -61,6 +68,15 @@ function bucketByLength(w) {
   if (L <= 4) return "easy";
   if (L <= 7) return "medium";
   return "hard";
+}
+
+function bucketLabelFa(b) {
+  return { easy: "آسان", medium: "متوسط", hard: "سخت" }[b] || b;
+}
+
+function wordMeta(word) {
+  const b = bucketByLength(word);
+  return { word, wordBucket: b, wordPoints: POINTS_BY_BUCKET[b] || 1 };
 }
 
 function uniq(arr) {
@@ -113,13 +129,13 @@ function pickRandom(arr, avoid) {
 function selectPool() {
   if (!POOLS) return [];
   if (!game) return POOLS.mixed.all;
-  const { wordMode, topicId, difficulty } = game.setup;
-  const d = difficulty === "mixed" ? "all" : difficulty;
+  const { wordMode, topicId: tid, difficulty: diff } = game.setup;
+  const d = diff === "mixed" ? "all" : diff;
   let pool;
-  if (wordMode === "topic" && topicId && POOLS.byTopic[topicId]) {
-    pool = POOLS.byTopic[topicId][d] || POOLS.byTopic[topicId].all;
+  if (wordMode === "topic" && tid && POOLS.byTopic[tid]) {
+    pool = POOLS.byTopic[tid][d] || POOLS.byTopic[tid].all;
     if (pool?.length) return pool;
-    return POOLS.byTopic[topicId].all?.length ? POOLS.byTopic[topicId].all : POOLS.mixed.all;
+    return POOLS.byTopic[tid].all?.length ? POOLS.byTopic[tid].all : POOLS.mixed.all;
   }
   pool = POOLS.mixed[d] || POOLS.mixed.all;
   return pool?.length ? pool : POOLS.mixed.all;
@@ -180,14 +196,18 @@ function startRound() {
   const slot = game.teamActorSlot[actingTeam] % members.length;
   const actor = members[slot];
   game.teamActorSlot[actingTeam]++;
-  const word = drawWord();
-  game.lastWord = word;
+  const rawWord = drawWord();
+  game.lastWord = rawWord;
+  const { word, wordBucket, wordPoints } = wordMeta(rawWord);
   game.round = {
     actorName: actor,
     actingTeamIndex: actingTeam,
     guessingTeamIndex: 1 - actingTeam,
     word,
-    endsAt: Date.now() + ROUND_MS,
+    wordBucket,
+    wordPoints,
+    timerActive: false,
+    endsAt: null,
     wordSwapsUsed: 0,
     wordSwapMax: 1,
   };
@@ -198,31 +218,34 @@ function startRound() {
 function endHand(reason, extra) {
   if (!game?.round) return;
   const word = game.round.word;
+  const guessPts = reason === "guess" ? game.round.wordPoints : 0;
+  const guessBucket = reason === "guess" ? game.round.wordBucket : null;
   game.round = null;
   game.handsPlayed++;
   if (game.handsPlayed >= game.setup.totalRounds) game.phase = "finished";
   if (reason === "guess") {
-    showToast(`${game.teamNames[extra.team]} امتیاز گرفت. کلمه: ${word}`);
+    showToast(
+      `${game.teamNames[extra.team]} +${guessPts} امتیاز (${bucketLabelFa(guessBucket || "medium")}). کلمه بود: ${word}`,
+    );
   } else if (reason === "timeout") {
-    showToast(`وقت تمام شد. کلمه: ${word}`);
+    showToast(`وقت تمام شد — بدون امتیاز. کلمه: ${word}`);
   } else if (reason === "skip") {
-    showToast(`دست رد شد. کلمه: ${word}`);
+    showToast(`دست رد شد — بدون امتیاز. کلمه: ${word}`);
   }
-  guessInput.value = "";
   render();
 }
 
 function tickTimer() {
-  if (!game?.round) return;
+  if (!game?.round?.timerActive || !game.round.endsAt) return;
   const left = Math.max(0, Math.ceil((game.round.endsAt - Date.now()) / 1000));
-  timerEl.textContent = `${left} ثانیه`;
+  timerEl.textContent = `${left} ثانیه تا پایان`;
   if (left <= 0) {
     endHand("timeout", {});
   }
 }
 
 setInterval(() => {
-  if (game?.round) tickTimer();
+  if (game?.round?.timerActive) tickTimer();
 }, 250);
 
 wordMode.addEventListener("change", () => {
@@ -236,6 +259,8 @@ btnStartGame.addEventListener("click", () => {
     setupError.hidden = false;
     return;
   }
+  if (!window.confirm("بازی با این تنظیمات شروع شود؟")) return;
+
   const { teamNames, rosters } = rosterFromUI();
   if (rosters[0].length < 1 || rosters[1].length < 1) {
     setupError.textContent = "برای هر تیم حداقل یک نام (یا فقط تعداد) وارد کنید.";
@@ -262,6 +287,13 @@ btnStartGame.addEventListener("click", () => {
   startRound();
 });
 
+btnStartTimer.addEventListener("click", () => {
+  if (!game?.round || game.round.timerActive) return;
+  game.round.timerActive = true;
+  game.round.endsAt = Date.now() + ROUND_MS;
+  render();
+});
+
 btnRevealWord.addEventListener("click", () => {
   if (!game?.round) return;
   wordReveal.classList.toggle("hidden");
@@ -273,29 +305,26 @@ btnRevealWord.addEventListener("click", () => {
 btnSwapWord.addEventListener("click", () => {
   if (!game?.round) return;
   if (game.round.wordSwapsUsed >= game.round.wordSwapMax) return;
-  const nw = drawWord();
-  game.lastWord = nw;
-  game.round.word = nw;
+  const nwRaw = drawWord();
+  game.lastWord = nwRaw;
+  const { word, wordBucket, wordPoints } = wordMeta(nwRaw);
+  game.round.word = word;
+  game.round.wordBucket = wordBucket;
+  game.round.wordPoints = wordPoints;
   game.round.wordSwapsUsed++;
-  secretWord.textContent = nw;
-  showToast("کلمه عوض شد.", 2000);
+  secretWord.textContent = word;
+  showToast(`کلمه عوض شد — ارزش جدید: ${wordPoints} (${bucketLabelFa(wordBucket)})`, 2800);
   render();
 });
 
-guessInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") btnGuess.click();
-});
-
 btnGuess.addEventListener("click", () => {
-  if (!game?.round) return;
-  const g = normalizeFa(guessInput.value);
-  if (!g) return;
-  if (g !== normalizeFa(game.round.word)) {
-    showToast("کلمه با حدس یکی نیست.", 2500);
+  if (!game?.round?.timerActive) {
+    showToast("اول «شروع زمان دست» را بزنید.", 2800);
     return;
   }
   const gt = game.round.guessingTeamIndex;
-  game.teamScores[gt] = (game.teamScores[gt] || 0) + 1;
+  const pts = game.round.wordPoints;
+  game.teamScores[gt] = (game.teamScores[gt] || 0) + pts;
   endHand("guess", { team: gt });
 });
 
@@ -313,7 +342,6 @@ btnReset.addEventListener("click", () => {
   playBlock.classList.add("hidden");
   setupBlock.classList.remove("hidden");
   finishedBar.classList.add("hidden");
-  guessInput.value = "";
   render();
 });
 
@@ -322,54 +350,101 @@ function render() {
   const names = game.teamNames;
   scoreName0.textContent = names[0];
   scoreName1.textContent = names[1];
-  scoreVal0.textContent = String(game.teamScores[0]);
-  scoreVal1.textContent = String(game.teamScores[1]);
+  const s0 = game.teamScores[0];
+  const s1 = game.teamScores[1];
+  scoreVal0.textContent = String(s0);
+  scoreVal1.textContent = String(s1);
+  totalScoreSum.textContent = `جمع امتیازها: ${s0 + s1}`;
 
   const total = game.setup.totalRounds;
   const done = game.handsPlayed;
   const r = game.round;
 
   if (game.phase === "finished") {
+    turnDetail.classList.add("hidden");
     finishedBar.classList.remove("hidden");
-    const s0 = game.teamScores[0];
-    const s1 = game.teamScores[1];
     let t = "";
     if (s0 > s1) t = `${names[0]} برنده است.`;
     else if (s1 > s0) t = `${names[1]} برنده است.`;
     else t = "مساوی!";
-    finishedText.textContent = `${t} (${done} دست انجام شد)`;
+    finishedText.textContent = `${t} — ${done} دست — جمع امتیازها: ${s0 + s1}`;
     phaseLine.textContent = "بازی تمام شد.";
     actorPanel.classList.add("hidden");
     btnSkip.classList.add("hidden");
     btnNextRound.classList.add("hidden");
     btnSwapWord.classList.add("hidden");
+    btnGuess.disabled = true;
+    btnStartTimer.classList.add("hidden");
     return;
   }
 
   finishedBar.classList.add("hidden");
+  btnGuess.disabled = false;
 
   if (r) {
-    phaseLine.textContent = `دست ${Math.min(done + 1, total)} از ${total} — میم: ${names[r.actingTeamIndex]} / حدس: ${names[r.guessingTeamIndex]}`;
+    const actingName = names[r.actingTeamIndex];
+    const guessingName = names[r.guessingTeamIndex];
+    const handNo = Math.min(done + 1, total);
+
+    turnDetail.classList.remove("hidden");
+    turnDetail.innerHTML = `
+      <div><strong>دست ${handNo}</strong> از <strong>${total}</strong></div>
+      <div>نوبت <strong>میم</strong>: <strong>${escapeHtml(r.actorName)}</strong> از تیم <strong>«${escapeHtml(actingName)}»</strong> (تیم ${r.actingTeamIndex === 0 ? "اول" : "دوم"})</div>
+      <div>تیم <strong>«${escapeHtml(guessingName)}»</strong> (تیم ${r.guessingTeamIndex === 0 ? "اول" : "دوم"}) باید حدس بزند.</div>
+      <div class="muted small-rule">بعد از این دست، نوبت میم به تیم دیگر می‌رود (یکی در میان).</div>
+    `;
+
+    phaseLine.textContent = r.timerActive
+      ? "زمان در حال اجراست — با «درست بود» امتیاز بگیرید یا منتظر پایان زمان بمانید."
+      : "زمان هنوز شروع نشده — میم آماده شد؛ دکمهٔ «شروع زمان دست» را بزنید.";
+
     actorPanel.classList.remove("hidden");
     actorName.textContent = r.actorName;
+    actorTeamName.textContent = actingName;
+    wordValueLine.textContent = `ارزش این کلمه در صورت حدس درست: ${r.wordPoints} امتیاز (${bucketLabelFa(r.wordBucket)})`;
     secretWord.textContent = r.word;
+
     const swapsLeft = r.wordSwapsUsed < r.wordSwapMax;
     btnSwapWord.classList.toggle("hidden", !swapsLeft);
     btnSwapWord.textContent = swapsLeft ? "تعویض کلمه (یک بار)" : "تعویض استفاده شد";
+
+    btnStartTimer.classList.toggle("hidden", r.timerActive);
+    btnStartTimer.disabled = r.timerActive;
+
+    if (r.timerActive) {
+      const left = Math.max(0, Math.ceil((r.endsAt - Date.now()) / 1000));
+      timerEl.textContent = `${left} ثانیه تا پایان`;
+    } else {
+      timerEl.textContent = "زمان شروع نشده";
+    }
+
     btnSkip.classList.remove("hidden");
     btnNextRound.classList.add("hidden");
+
+    btnGuess.disabled = !r.timerActive;
   } else {
+    turnDetail.classList.add("hidden");
     if (done >= total) {
       game.phase = "finished";
       render();
       return;
     }
-    phaseLine.textContent = `بین دست‌ها — ${done} دست تمام شده از ${total}`;
+    phaseLine.textContent = `بین دست‌ها — ${done} دست تمام شده از ${total}. برای دست بعد دکمه را بزنید.`;
     actorPanel.classList.add("hidden");
     btnSkip.classList.add("hidden");
     btnNextRound.classList.remove("hidden");
     btnSwapWord.classList.add("hidden");
+    btnStartTimer.classList.add("hidden");
+    timerEl.textContent = "";
   }
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 async function init() {

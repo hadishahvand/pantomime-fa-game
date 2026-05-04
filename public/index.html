@@ -63,7 +63,7 @@
           <select id="topicId"></select>
         </div>
 
-        <label>سطح سختی کلمات</label>
+        <label>فیلتر سطح کلمات <span class="muted">(امتیاز هر کلمه جداگانه بر اساس طول خودش است: آسان ۱، متوسط ۲، سخت ۳)</span></label>
         <select id="difficulty">
           <option value="easy">آسان</option>
           <option value="medium" selected>متوسط</option>
@@ -87,11 +87,17 @@
             <span class="tv" id="scoreVal1">0</span>
           </div>
         </div>
+        <p id="totalScoreSum" class="total-sum"></p>
+
+        <div id="turnDetail" class="turn-detail hidden"></div>
         <p id="phaseLine" class="phase-line"></p>
 
         <div id="actorPanel" class="actor-panel hidden">
-          <p class="muted">نوبت میم: <strong id="actorName"></strong></p>
+          <p class="muted">نوبت میم</p>
+          <p class="actor-line"><strong id="actorName"></strong> <span class="muted">از تیم</span> <strong id="actorTeamName"></strong></p>
+          <p id="wordValueLine" class="word-value muted"></p>
           <button type="button" id="btnRevealWord" class="btn secondary">نمایش / پنهان کردن کلمه</button>
+          <button type="button" id="btnStartTimer" class="btn primary timer-start-btn">شروع زمان دست</button>
           <p id="timer" class="timer timer-inline"></p>
           <div id="wordReveal" class="word-reveal hidden">
             <p id="secretWord" class="secret-word"></p>
@@ -100,11 +106,8 @@
         </div>
 
         <div id="guessBox" class="guess-box">
-          <label>حدس تیم مقابل</label>
-          <div class="guess-row">
-            <input id="guessInput" type="text" placeholder="کلمه را دقیق بنویسید" />
-            <button type="button" id="btnGuess" class="btn primary">درست بود</button>
-          </div>
+          <label id="guessLabel">اگر حدس تیم حریف درست بود</label>
+          <button type="button" id="btnGuess" class="btn primary wide">درست بود</button>
         </div>
 
         <div class="row">
